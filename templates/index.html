@@ -57,44 +57,71 @@
             font-size: 0.95rem;
         }
 
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -2px;
+        }
+
         .main-content {
             padding: 30px;
         }
 
-        /* 上传区域 */
-        .upload-section {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .upload-section:hover {
-            border-color: #667eea;
-            background: #f0f3ff;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .upload-text {
-            color: #495057;
-            font-size: 1rem;
-            margin-bottom: 8px;
-        }
-
-        .upload-hint {
-            color: #6c757d;
-            font-size: 0.85rem;
-        }
-
-        #fileInput {
+        .page {
             display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .text-input-section {
+            margin-bottom: 20px;
+        }
+
+        .text-input-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .text-input-section textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .text-input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .btn {
@@ -121,44 +148,23 @@
             transform: none;
         }
 
-        .btn-small {
-            padding: 6px 14px;
-            font-size: 0.85rem;
-        }
-
         .btn-outline {
             background: white;
             color: #667eea;
             border: 2px solid #667eea;
         }
 
-        .text-input-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
+        .btn-danger {
+            background: #dc3545;
+            border: 2px solid #dc3545;
+            padding: 6px 14px;
+            font-size: 0.85rem;
         }
 
-        .text-input-section label {
-            display: block;
-            margin-bottom: 10px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .text-input-section textarea {
-            width: 100%;
-            height: 120px;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            font-size: 1rem;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-
-        .text-input-section textarea:focus {
-            outline: none;
-            border-color: #667eea;
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            margin-top: 10px;
         }
 
         /* 加载状态 */
@@ -187,6 +193,15 @@
         .error-message {
             background: #fff3cd;
             color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
             padding: 15px;
             border-radius: 8px;
             margin: 20px 0;
@@ -328,56 +343,63 @@
             color: #333;
         }
 
-        /* 图片展示 */
-        .uploaded-image-container {
-            margin: 15px 0;
-            text-align: center;
+        /* 错题本样式 */
+        .mistake-list {
+            list-style: none;
         }
 
-        .uploaded-image-container img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.3s;
+        .mistake-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
         }
 
-        .uploaded-image-container img:hover {
-            transform: scale(1.02);
+        .mistake-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
         }
 
-        .caption {
-            color: #666;
+        .mistake-date {
+            color: #6c757d;
             font-size: 0.85rem;
-            margin-top: 8px;
         }
 
-        /* Lightbox */
-        .lightbox {
+        .mistake-question {
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+
+        .mistake-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mistake-detail {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
             display: none;
-            position: fixed;
-            z-index: 9999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            justify-content: center;
-            align-items: center;
         }
 
-        .lightbox img {
-            max-width: 90%;
-            max-height: 90%;
+        .mistake-detail.active {
+            display: block;
         }
 
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 35px;
-            color: #fff;
-            font-size: 36px;
-            cursor: pointer;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
         }
 
         /* 响应式设计 */
@@ -393,10 +415,6 @@
             .header h1 {
                 font-size: 1.4rem;
             }
-            
-            .upload-section {
-                padding: 20px;
-            }
         }
     </style>
 </head>
@@ -404,55 +422,89 @@
     <div class="container">
         <div class="header">
             <h1>📐 高中数学错题巩固器</h1>
-            <p>输入题目 → 获取解题思路和知识点 → 巩固练习</p>
+            <p>输入题目 → 获取解题思路和知识点 → 存入错题本复习</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="analyze">分析题目</div>
+            <div class="tab" data-tab="mistakes">错题本</div>
         </div>
 
         <div class="main-content">
-            <div class="text-input-section">
-                <label for="questionText">输入题目内容（支持 LaTeX 公式，如 $x^2$、$\frac{a}{b}$、$\sqrt{2}$）：</label>
-                <textarea id="questionText" placeholder="请输入数学题目内容..."></textarea>
-                <button class="btn" id="analyzeBtn">分析题目</button>
+            <!-- 分析题目页面 -->
+            <div class="page active" id="page-analyze">
+                <div class="text-input-section">
+                    <label for="questionText">输入题目内容（支持 LaTeX 公式，如 $x^2$、$\frac{a}{b}$、$\sqrt{2}$）：</label>
+                    <textarea id="questionText" placeholder="请输入数学题目内容..."></textarea>
+                    <button class="btn" id="analyzeBtn">分析题目</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在分析题目...</p>
+                </div>
+
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+
+                <div class="result-section" id="resultSection">
+                    <div class="result-card">
+                        <h3><span class="icon">📝</span>原始题目</h3>
+                        <div class="original-question" id="originalQuestion"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3><span class="icon">🎯</span>知识点分析</h3>
+                        <div class="knowledge-tags" id="knowledgeTags"></div>
+                        <div class="tag difficulty" id="difficultyTag"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3><span class="icon">💡</span>解题思路与答案</h3>
+                        <div class="solution" id="solution"></div>
+                    </div>
+
+                    <div class="result-card">
+                        <h3><span class="icon">🔄</span>举一反三（类似题目）</h3>
+                        <ul class="related-questions" id="relatedQuestions"></ul>
+                    </div>
+
+                    <button class="btn" id="saveMistakeBtn">💾 保存到错题本</button>
+                </div>
             </div>
 
-            <div class="loading" id="loading" style="display: none;">
-                <div class="loading-spinner"></div>
-                <p>正在分析题目...</p>
-            </div>
-
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
-
-            <div class="result-section" id="resultSection">
-                <div class="result-card">
-                    <h3><span class="icon">📝</span>原始题目</h3>
-                    <div class="original-question" id="originalQuestion"></div>
-                </div>
-
-                <div class="result-card">
-                    <h3><span class="icon">🎯</span>知识点分析</h3>
-                    <div class="knowledge-tags" id="knowledgeTags"></div>
-                    <div class="tag difficulty" id="difficultyTag"></div>
-                </div>
-
-                <div class="result-card">
-                    <h3><span class="icon">💡</span>解题思路与答案</h3>
-                    <div class="solution" id="solution"></div>
-                </div>
-
-                <div class="result-card">
-                    <h3><span class="icon">🔄</span>举一反三（类似题目）</h3>
-                    <ul class="related-questions" id="relatedQuestions"></ul>
-                </div>
+            <!-- 错题本页面 -->
+            <div class="page" id="page-mistakes">
+                <div id="mistakeList"></div>
             </div>
         </div>
     </div>
 
     <script>
+        let currentResult = null;
+
         // DOM元素
         const questionText = document.getElementById('questionText');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
         const resultSection = document.getElementById('resultSection');
+        const saveMistakeBtn = document.getElementById('saveMistakeBtn');
+
+        // Tab切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('page-' + tab.dataset.tab).classList.add('active');
+                
+                if (tab.dataset.tab === 'mistakes') {
+                    loadMistakes();
+                }
+            });
+        });
 
         // 分析按钮
         analyzeBtn.addEventListener('click', () => {
@@ -480,6 +532,7 @@
                 console.log('响应数据:', data);
 
                 if (response.ok) {
+                    currentResult = data;
                     displayResult(data);
                 } else {
                     showError(data.error || '分析失败');
@@ -545,7 +598,6 @@
                 answerDiv.style.display = 'block';
                 btn.textContent = '收起解答 ▲';
                 
-                // 渲染公式
                 if (window.MathJax && MathJax.typesetPromise) {
                     MathJax.typesetPromise([answerDiv]).catch(function(err) {
                         console.log('MathJax error:', err);
@@ -554,6 +606,189 @@
             } else {
                 answerDiv.style.display = 'none';
                 btn.textContent = '查看解答 ▼';
+            }
+        }
+
+        // 保存错题
+        saveMistakeBtn.addEventListener('click', async () => {
+            if (!currentResult) {
+                showError('请先分析题目');
+                return;
+            }
+
+            try {
+                saveMistakeBtn.disabled = true;
+                saveMistakeBtn.textContent = '保存中...';
+
+                const response = await fetch('/mistakes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentResult)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess('已保存到错题本！');
+                } else {
+                    showError(data.error || '保存失败');
+                }
+            } catch (error) {
+                console.error('保存错误:', error);
+                showError('网络错误: ' + error.message);
+            } finally {
+                saveMistakeBtn.disabled = false;
+                saveMistakeBtn.textContent = '💾 保存到错题本';
+            }
+        });
+
+        // 加载错题
+        async function loadMistakes() {
+            const container = document.getElementById('mistakeList');
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>加载中...</p></div>';
+            document.getElementById('mistakeList').querySelector('.loading').style.display = 'block';
+
+            try {
+                const response = await fetch('/mistakes');
+                const data = await response.json();
+
+                if (response.ok) {
+                    renderMistakes(data.mistakes);
+                } else {
+                    showError(data.error || '加载失败');
+                }
+            } catch (error) {
+                console.error('加载错误:', error);
+                showError('网络错误: ' + error.message);
+            }
+        }
+
+        function renderMistakes(mistakes) {
+            const container = document.getElementById('mistakeList');
+
+            if (mistakes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <h3>暂无错题</h3>
+                        <p>快去分析题目并保存到错题本吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            mistakes.forEach((mistake, index) => {
+                const li = document.createElement('li');
+                li.className = 'mistake-item';
+                li.innerHTML = `
+                    <div class="mistake-header">
+                        <span class="mistake-date">📅 ${mistake.created_at}</span>
+                        <button class="btn btn-danger" onclick="deleteMistake('${mistake.id}')">删除</button>
+                    </div>
+                    <div class="mistake-question">${escapeHtml(mistake.question)}</div>
+                    <div class="mistake-actions">
+                        <button class="btn btn-small btn-outline" onclick="toggleMistakeDetail(${index})">查看详情 ▼</button>
+                    </div>
+                    <div class="mistake-detail" id="mistake-detail-${index}">
+                        ${renderMistakeDetail(mistake)}
+                    </div>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        function renderMistakeDetail(mistake) {
+            let html = `
+                <div class="result-card" style="margin-top: 15px;">
+                    <h3><span class="icon">🎯</span>知识点</h3>
+                    <div class="knowledge-tags">
+            `;
+            
+            mistake.analysis.knowledge_points.forEach(point => {
+                html += `<span class="tag">${escapeHtml(point)}</span>`;
+            });
+            
+            html += `
+                    </div>
+                    <div class="tag difficulty">难度: ${escapeHtml(mistake.analysis.difficulty)}</div>
+                </div>
+                <div class="result-card">
+                    <h3><span class="icon">💡</span>解题思路</h3>
+                    <div class="solution">${escapeHtml(mistake.analysis.solution)}</div>
+                </div>
+                <div class="result-card">
+                    <h3><span class="icon">🔄</span>举一反三</h3>
+                    <ul class="related-questions">
+            `;
+            
+            mistake.related_questions.forEach((q, i) => {
+                const isGaokao = q.is_gaokao || false;
+                html += `
+                    <li>
+                        <div class="question-number">${i + 1}</div>
+                        <div class="question-text">${escapeHtml(q.question)}${isGaokao ? '<span class="gaokao-badge">高考真题</span>' : ''}</div>
+                        <button class="toggle-answer-btn" onclick="toggleMistakeAnswer(${i})">查看解答 ▼</button>
+                        <div class="question-answer" id="mistake-answer-${i}" style="display: none;">${escapeHtml(q.answer)}</div>
+                    </li>
+                `;
+            });
+            
+            html += `
+                    </ul>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        function toggleMistakeDetail(index) {
+            const detail = document.getElementById(`mistake-detail-${index}`);
+            if (detail.classList.contains('active')) {
+                detail.classList.remove('active');
+            } else {
+                detail.classList.add('active');
+                if (window.MathJax && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([detail]).catch(function(err) {
+                        console.log('MathJax error:', err);
+                    });
+                }
+            }
+        }
+
+        function toggleMistakeAnswer(index) {
+            const answerDiv = document.getElementById(`mistake-answer-${index}`);
+            const btn = answerDiv.previousElementSibling;
+            
+            if (answerDiv.style.display === 'none') {
+                answerDiv.style.display = 'block';
+                btn.textContent = '收起解答 ▲';
+            } else {
+                answerDiv.style.display = 'none';
+                btn.textContent = '查看解答 ▼';
+            }
+        }
+
+        async function deleteMistake(id) {
+            if (!confirm('确定要删除这道错题吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/mistakes/' + id, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showSuccess('已删除！');
+                    loadMistakes();
+                } else {
+                    const data = await response.json();
+                    showError(data.error || '删除失败');
+                }
+            } catch (error) {
+                console.error('删除错误:', error);
+                showError('网络错误: ' + error.message);
             }
         }
 
@@ -575,9 +810,19 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
             setTimeout(() => {
                 errorMessage.style.display = 'none';
             }, 5000);
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
         }
     </script>
 </body>
