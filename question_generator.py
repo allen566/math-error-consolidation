@@ -455,7 +455,7 @@ a·b = |a||b|cosθ = 1 × 2 × cos60° = 2 × (1/2) = 1
             ],
             '立体几何': [
                 {
-                    'question': '如图，在四棱锥 P-ABCD 中，底面 ABCD 是菱形，∠ABC = 60°，PA = PC = AC = PB = PD = 2。（1）证明：PO ⊥ 平面 ABCD；（2）求点 P 到平面 ABCD 的距离。',
+                    'question': '在四棱锥 P-ABCD 中，底面 ABCD 是菱形，对角线 AC 与 BD 交于点 O，∠ABC = 60°，PA = PC = AC = PB = PD = 2。（1）证明：PO ⊥ 平面 ABCD；（2）求点 P 到平面 ABCD 的距离。',
                     'source': '2019年全国Ⅰ卷理科数学第18题',
                     'difficulty': '困难',
                     'answer': '''【解题思路】
@@ -484,6 +484,32 @@ a·b = |a||b|cosθ = 1 × 2 × cos60° = 2 × (1/2) = 1
 (2) 点 P 到平面 ABCD 的距离为 √3''',
                     'is_gaokao': True,
                     'tags': ['立体几何', '线面垂直', '距离计算', '菱形']
+                },
+                {
+                    'question': '已知正方体 ABCD-A1B1C1D1 的棱长为 2，E 为 AB 的中点，求异面直线 A1E 与 B1C 所成角的余弦值。',
+                    'source': '2022年全国甲卷理科数学第8题',
+                    'difficulty': '中等',
+                    'answer': '''【解题思路】
+利用空间向量求异面直线所成的角。
+
+【解答过程】
+1. 建立空间直角坐标系，以 D 为原点：
+- D(0, 0, 0), A(2, 0, 0), B(2, 2, 0), E(2, 1, 0)
+- A1(2, 0, 2), B1(2, 2, 2), C(0, 2, 0)
+2. 求向量：
+- 向量 A1E = E - A1 = (2-2, 1-0, 0-2) = (0, 1, -2)
+- 向量 B1C = C - B1 = (0-2, 2-2, 0-2) = (-2, 0, -2)
+3. 计算夹角余弦值：
+cosθ = |A1E · B1C| / (|A1E| |B1C|)
+A1E · B1C = 0×(-2) + 1×0 + (-2)×(-2) = 4
+|A1E| = √(0² + 1² + (-2)²) = √5
+|B1C| = √((-2)² + 0² + (-2)²) = √8 = 2√2
+cosθ = |4| / (√5 × 2√2) = 4 / (2√10) = 2/√10 = √10/5
+
+【答案】
+异面直线所成角的余弦值为 √10/5''',
+                    'is_gaokao': True,
+                    'tags': ['空间向量', '异面直线夹角', '正方体']
                 }
             ],
             '概率统计': [
@@ -752,8 +778,22 @@ S_n = Σ(k=1 to n) k·a_k = Σ(k=1 to n) k·(1/k) = Σ(k=1 to n) 1 = n
         返回格式：
         - 包含1-2道高考真题（标明出处）
         - 其余为高难度练习题
+        - 几何图形题：确保不依赖图形，用文字完整描述
         """
         questions = []
+        
+        # 几何图形关键词
+        geometry_keywords = ['如图', '图中', '看图', '图示', '图形', '几何图', '几何图形']
+        
+        # 几何相关知识点
+        geometry_topics = ['立体几何', '圆锥曲线', '三角函数', '向量']
+        
+        def is_dependent_on_graph(q):
+            """检查题目是否依赖几何图形"""
+            for keyword in geometry_keywords:
+                if keyword in q.get('question', ''):
+                    return True
+            return False
         
         # 从每个知识点中选取题目
         for point in knowledge_points:
@@ -761,28 +801,38 @@ S_n = Σ(k=1 to n) k·a_k = Σ(k=1 to n) k·(1/k) = Σ(k=1 to n) 1 = n
                 # 优先选择高考真题
                 gaokao_qs = self.gaokao_database[point]
                 
+                # 过滤掉依赖图形的题目
+                valid_gaokao_qs = [q for q in gaokao_qs if not is_dependent_on_graph(q)]
+                
+                if not valid_gaokao_qs:
+                    valid_gaokao_qs = gaokao_qs  # 如果所有都依赖，那也没办法
+                
                 # 随机打乱顺序
-                random.shuffle(gaokao_qs)
+                random.shuffle(valid_gaokao_qs)
                 
                 # 选择1-2道高考真题
-                num_gaokao = min(2, len(gaokao_qs), max(1, count//2))
-                selected_gaokao = gaokao_qs[:num_gaokao]
+                num_gaokao = min(2, len(valid_gaokao_qs), max(1, count//2))
+                selected_gaokao = valid_gaokao_qs[:num_gaokao]
                 
                 questions.extend(selected_gaokao)
                 
                 # 如果还需要更多题目，从高难度题库补充
                 if len(questions) < count and point in self.advanced_questions:
                     advanced_qs = self.advanced_questions[point]
+                    valid_advanced_qs = [q for q in advanced_qs if not is_dependent_on_graph(q)]
+                    if not valid_advanced_qs:
+                        valid_advanced_qs = advanced_qs
                     remaining = count - len(questions)
-                    questions.extend(random.sample(advanced_qs, min(remaining, len(advanced_qs))))
+                    questions.extend(random.sample(valid_advanced_qs, min(remaining, len(valid_advanced_qs))))
             
             # 如果题目还不够，尝试从相关知识点补充
             if len(questions) < count:
                 for other_point in self.gaokao_database:
                     if other_point != point and other_point in self.gaokao_database:
                         extra_qs = self.gaokao_database[other_point]
-                        if extra_qs and len(extra_qs) > 0:
-                            questions.append(random.choice(extra_qs))
+                        valid_extra_qs = [q for q in extra_qs if not is_dependent_on_graph(q)]
+                        if valid_extra_qs and len(valid_extra_qs) > 0:
+                            questions.append(random.choice(valid_extra_qs))
                             if len(questions) >= count:
                                 break
             
