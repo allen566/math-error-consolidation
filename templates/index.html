@@ -625,10 +625,23 @@
                 <div class="ocr-section" id="ocrSection">
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-icon">📸</div>
-                        <div class="upload-text">点击或拖拽上传错题图片</div>
-                        <div class="upload-hint">支持拍照和相册选择</div>
+                        <div class="upload-text">选择上传方式</div>
+                        
+                        <div class="upload-buttons" style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                            <button class="btn btn-success" id="galleryBtn" style="padding:12px 24px;">
+                                🖼️ 从相册选择
+                            </button>
+                            <button class="btn" id="cameraBtn" style="padding:12px 24px;">
+                                📷 拍照
+                            </button>
+                        </div>
+                        
+                        <div class="upload-hint" style="margin-top:15px;">点击上方按钮选择图片</div>
                     </div>
-                    <input type="file" id="fileInput" accept="image/*">
+                    
+                    <!-- 隐藏的文件输入框 -->
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
                     
                     <div class="image-preview-container" id="imagePreviewContainer" style="display:none;">
                         <img id="previewImage" src="" alt="预览">
@@ -730,6 +743,9 @@
         const ocrWarning = document.getElementById('ocrWarning');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const cameraInput = document.getElementById('cameraInput');
+        const galleryBtn = document.getElementById('galleryBtn');
+        const cameraBtn = document.getElementById('cameraBtn');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const previewImage = document.getElementById('previewImage');
         const ocrBtn = document.getElementById('ocrBtn');
@@ -766,13 +782,19 @@
             });
         });
 
-        // 上传区域点击
-        uploadArea.addEventListener('click', () => {
+        // 从相册选择
+        galleryBtn.addEventListener('click', () => {
             fileInput.click();
         });
 
-        // 文件选择
+        // 拍照
+        cameraBtn.addEventListener('click', () => {
+            cameraInput.click();
+        });
+
+        // 文件选择 - 相册和拍照共用处理函数
         fileInput.addEventListener('change', handleFileSelect);
+        cameraInput.addEventListener('change', handleFileSelect);
 
         // 拖拽上传
         uploadArea.addEventListener('dragover', (e) => {
@@ -807,6 +829,8 @@
             reader.onload = (event) => {
                 previewImage.src = event.target.result;
                 currentImageData = event.target.result;
+                // 隐藏上传区域，显示预览和按钮
+                uploadArea.style.display = 'none';
                 imagePreviewContainer.style.display = 'block';
                 ocrBtnGroup.style.display = 'flex';
                 ocrWarning.style.display = 'block';
@@ -879,11 +903,13 @@
         // 重新上传
         reuploadBtn.addEventListener('click', () => {
             fileInput.value = '';
+            cameraInput.value = '';
             currentImageData = null;
             imagePreviewContainer.style.display = 'none';
             ocrBtnGroup.style.display = 'none';
             ocrWarning.style.display = 'none';
-            fileInput.click();
+            // 重新显示选择界面
+            uploadArea.style.display = 'block';
         });
 
         // 清空内容
