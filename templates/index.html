@@ -468,13 +468,16 @@
             showLoading(true);
 
             try {
+                console.log('正在发送请求...');
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ question: text })
                 });
 
+                console.log('收到响应:', response.status);
                 const data = await response.json();
+                console.log('响应数据:', data);
 
                 if (response.ok) {
                     displayResult(data);
@@ -482,7 +485,8 @@
                     showError(data.error || '分析失败');
                 }
             } catch (error) {
-                showError('网络错误，请重试');
+                console.error('错误:', error);
+                showError('网络错误: ' + error.message + '，请重试');
             } finally {
                 showLoading(false);
             }
