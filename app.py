@@ -207,9 +207,15 @@ class MathRequestHandler(BaseHTTPRequestHandler):
             self.send_json_response({'error': f'分析失败: {str(e)}'}, 500)
 
 
-def run_server(port=5000):
+def run_server(port=None):
     """启动服务器"""
     import socket
+    import os
+    
+    # 优先使用环境变量 PORT（用于部署平台如 Render）
+    if port is None:
+        port = int(os.environ.get('PORT', 5000))
+    
     server_address = ('', port)
     httpd = HTTPServer(server_address, MathRequestHandler)
     
