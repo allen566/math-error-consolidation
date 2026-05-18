@@ -404,22 +404,12 @@
     <div class="container">
         <div class="header">
             <h1>📐 高中数学错题巩固器</h1>
-            <p>上传错题或输入题目 → 获取解题思路和知识点 → 巩固练习</p>
+            <p>输入题目 → 获取解题思路和知识点 → 巩固练习</p>
         </div>
 
         <div class="main-content">
-            <!-- 图片上传区域 -->
-            <div class="upload-section" id="uploadSection">
-                <div class="upload-icon">📷</div>
-                <div class="upload-text">点击或拖拽上传错题图片</div>
-                <div class="upload-hint">支持 PNG, JPG, JPEG, GIF 格式</div>
-                <input type="file" id="fileInput" accept="image/*">
-            </div>
-
-            <button class="btn" id="uploadBtn" style="display: none;">开始识别</button>
-
             <div class="text-input-section">
-                <label for="questionText">或直接输入题目内容（支持 LaTeX 公式，如 $x^2$、$\frac{a}{b}$、$\sqrt{2}$）：</label>
+                <label for="questionText">输入题目内容（支持 LaTeX 公式，如 $x^2$、$\frac{a}{b}$、$\sqrt{2}$）：</label>
                 <textarea id="questionText" placeholder="请输入数学题目内容..."></textarea>
                 <button class="btn" id="analyzeBtn">分析题目</button>
             </div>
@@ -435,14 +425,6 @@
                 <div class="result-card">
                     <h3><span class="icon">📝</span>原始题目</h3>
                     <div class="original-question" id="originalQuestion"></div>
-                    <button class="btn btn-small btn-outline" id="editQuestionBtn" style="margin-top: 10px; display: none;">编辑题目</button>
-                    <div id="editQuestionPanel" style="display: none; margin-top: 10px;">
-                        <textarea id="editQuestionText" style="width: 100%; height: 100px; padding: 10px; border: 2px solid #ddd; border-radius: 8px;"></textarea>
-                        <div style="margin-top: 10px;">
-                            <button class="btn btn-small" id="saveEditBtn">保存并重新分析</button>
-                            <button class="btn btn-small btn-outline" id="cancelEditBtn">取消</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="result-card">
@@ -464,67 +446,13 @@
         </div>
     </div>
 
-    <!-- Lightbox for image preview -->
-    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <span class="lightbox-close">&times;</span>
-        <img id="lightboxImg" src="" alt="放大查看">
-    </div>
-
     <script>
         // DOM元素
-        const uploadSection = document.getElementById('uploadSection');
-        const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
         const questionText = document.getElementById('questionText');
         const analyzeBtn = document.getElementById('analyzeBtn');
         const loading = document.getElementById('loading');
         const errorMessage = document.getElementById('errorMessage');
         const resultSection = document.getElementById('resultSection');
-
-        // 点击上传区域触发文件选择
-        uploadSection.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        // 文件选择变化 - 显示已选文件名
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                uploadSection.querySelector('.upload-text').textContent = `已选择: ${file.name}`;
-                uploadBtn.style.display = 'inline-block';
-            }
-        });
-
-        // 拖拽上传
-        uploadSection.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadSection.style.borderColor = '#667eea';
-        });
-
-        uploadSection.addEventListener('dragleave', () => {
-            uploadSection.style.borderColor = '#dee2e6';
-        });
-
-        uploadSection.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadSection.style.borderColor = '#dee2e6';
-            if (e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0];
-                uploadSection.querySelector('.upload-text').textContent = `已选择: ${file.name}`;
-                uploadBtn.style.display = 'inline-block';
-                // 拖拽时直接上传
-                uploadFile(file);
-            }
-        });
-
-        // 上传按钮
-        uploadBtn.addEventListener('click', () => {
-            if (fileInput.files.length > 0) {
-                uploadFile(fileInput.files[0]);
-            } else {
-                showError('请先选择要上传的图片');
-            }
-        });
 
         // 分析按钮
         analyzeBtn.addEventListener('click', () => {
@@ -535,37 +463,6 @@
             }
             analyzeQuestion(text);
         });
-
-        async function uploadFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showError('请选择图片文件');
-                return;
-            }
-
-            showLoading(true);
-
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    displayResult(data);
-                } else {
-                    showError(data.error || '上传失败');
-                }
-            } catch (error) {
-                showError('网络错误，请重试');
-            } finally {
-                showLoading(false);
-            }
-        }
 
         async function analyzeQuestion(text) {
             showLoading(true);
@@ -594,16 +491,7 @@
         function displayResult(data) {
             const originalQuestionDiv = document.getElementById('originalQuestion');
             
-            let imageHtml = '';
-            if (data.image_url) {
-                imageHtml = `
-                    <div class="uploaded-image-container">
-                        <img src="${data.image_url}" alt="题目原图" onclick="openLightbox('${data.image_url}')" title="点击查看大图" />
-                        <div class="caption">📷 上传的题目原图（点击可放大查看）</div>
-                    </div>`;
-            }
-            
-            originalQuestionDiv.innerHTML = imageHtml + escapeHtml(data.original_question);
+            originalQuestionDiv.textContent = data.original_question;
 
             const tagsContainer = document.getElementById('knowledgeTags');
             tagsContainer.innerHTML = '';
@@ -637,9 +525,6 @@
 
             resultSection.classList.add('active');
 
-            // 显示编辑按钮
-            document.getElementById('editQuestionBtn').style.display = 'inline-block';
-
             // 渲染数学公式
             if (window.MathJax && MathJax.typesetPromise) {
                 MathJax.typesetPromise([resultSection]).catch(function(err) {
@@ -647,97 +532,6 @@
                 });
             }
         }
-
-        // 编辑题目功能
-        document.getElementById('editQuestionBtn').addEventListener('click', function() {
-            const originalText = document.getElementById('originalQuestion').textContent.trim();
-            document.getElementById('editQuestionText').value = originalText;
-            document.getElementById('editQuestionPanel').style.display = 'block';
-            this.style.display = 'none';
-        });
-
-        document.getElementById('cancelEditBtn').addEventListener('click', function() {
-            document.getElementById('editQuestionPanel').style.display = 'none';
-            document.getElementById('editQuestionBtn').style.display = 'inline-block';
-        });
-
-        document.getElementById('saveEditBtn').addEventListener('click', function() {
-            const editedText = document.getElementById('editQuestionText').value.trim();
-            if (!editedText) {
-                alert('请输入题目内容');
-                return;
-            }
-            
-            showLoading(true);
-            fetch('/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: editedText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showError(data.error);
-                } else {
-                    // 更新原始题目显示但保留图片
-                    const originalQuestionDiv = document.getElementById('originalQuestion');
-                    const currentImage = originalQuestionDiv.querySelector('img');
-                    let imageHtml = '';
-                    if (currentImage) {
-                        imageHtml = `
-                            <div class="uploaded-image-container">
-                                <img src="${currentImage.src}" alt="题目原图" onclick="openLightbox('${currentImage.src}')" title="点击查看大图" />
-                                <div class="caption">📷 上传的题目原图（点击可放大查看）</div>
-                            </div>`;
-                    }
-                    originalQuestionDiv.innerHTML = imageHtml + escapeHtml(data.original_question);
-                    
-                    // 更新其他内容
-                    const tagsContainer = document.getElementById('knowledgeTags');
-                    tagsContainer.innerHTML = '';
-                    data.analysis.knowledge_points.forEach(point => {
-                        const tag = document.createElement('span');
-                        tag.className = 'tag';
-                        tag.textContent = point;
-                        tagsContainer.appendChild(tag);
-                    });
-                    
-                    document.getElementById('difficultyTag').textContent = '难度: ' + data.analysis.difficulty;
-                    document.getElementById('solution').innerHTML = escapeHtml(data.analysis.solution);
-                    
-                    const questionsContainer = document.getElementById('relatedQuestions');
-                    questionsContainer.innerHTML = '';
-                    data.related_questions.forEach((q, index) => {
-                        const li = document.createElement('li');
-                        const isGaokao = q.is_gaokao || false;
-                        if (isGaokao) { li.classList.add('gaokao'); }
-                        const sourceText = isGaokao && q.source ? '<div class="question-source">📝 ' + escapeHtml(q.source) + '</div>' : '';
-                        li.innerHTML = `
-                            <div class="question-number">${index + 1}</div>
-                            <div class="question-text">${escapeHtml(q.question)}${isGaokao ? '<span class="gaokao-badge">高考真题</span>' : ''}</div>
-                            ${sourceText}
-                            <button class="toggle-answer-btn" onclick="toggleAnswer(${index})">查看解答 ▼</button>
-                            <div class="question-answer" id="answer-${index}" style="display: none;">${escapeHtml(q.answer)}</div>
-                        `;
-                        questionsContainer.appendChild(li);
-                    });
-                    
-                    if (window.MathJax && MathJax.typesetPromise) {
-                        MathJax.typesetPromise([resultSection]).catch(function(err) {
-                            console.log('MathJax typeset error:', err);
-                        });
-                    }
-                }
-            })
-            .catch(error => {
-                showError('网络错误，请重试');
-            })
-            .finally(() => {
-                showLoading(false);
-                document.getElementById('editQuestionPanel').style.display = 'none';
-                document.getElementById('editQuestionBtn').style.display = 'inline-block';
-            });
-        });
 
         function toggleAnswer(index) {
             const answerDiv = document.getElementById(`answer-${index}`);
@@ -757,15 +551,6 @@
                 answerDiv.style.display = 'none';
                 btn.textContent = '查看解答 ▼';
             }
-        }
-
-        function openLightbox(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightbox').style.display = 'flex';
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightbox').style.display = 'none';
         }
 
         function escapeHtml(text) {

@@ -1,2 +1,2 @@
-pytesseract
-Pillow
+# 仅保留文本分析功能，无需额外依赖
+
