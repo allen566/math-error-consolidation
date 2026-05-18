@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高中数学错题巩固器</title>
+    
+    <!-- MathJax 数学公式渲染 -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        /* 上传区域 */
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: #495057;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-small {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .text-input-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+
+        .text-input-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .text-input-section textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .text-input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        /* 结果区域 */
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .result-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .icon {
+            margin-right: 8px;
+        }
+
+        /* 知识点标签 */
+        .knowledge-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .tag.difficulty {
+            background: #28a745;
+            margin-left: 8px;
+        }
+
+        /* 原始题目 */
+        .original-question {
+            line-height: 1.8;
+            color: #444;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* 解题思路 */
+        .solution {
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        /* 类似题目列表 */
+        .related-questions {
+            list-style: none;
+        }
+
+        .related-questions li {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+        }
+
+        .question-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .question-text {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .gaokao-badge {
+            background: #dc3545;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
+        .question-source {
+            color: #666;
+            font-size: 0.85rem;
+            margin: 8px 0;
+        }
+
+        .toggle-answer-btn {
+            background: transparent;
+            color: #667eea;
+            border: 1px solid #667eea;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .toggle-answer-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .question-answer {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: #333;
+        }
+
+        /* 图片展示 */
+        .uploaded-image-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .uploaded-image-container img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .uploaded-image-container img:hover {
+            transform: scale(1.02);
+        }
+
+        .caption {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 36px;
+            cursor: pointer;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .upload-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📐 高中数学错题巩固器</h1>
+            <p>上传错题或输入题目 → 获取解题思路和知识点 → 巩固练习</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 图片上传区域 -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">点击或拖拽上传错题图片</div>
+                <div class="upload-hint">支持 PNG, JPG, JPEG, GIF 格式</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <button class="btn" id="uploadBtn" style="display: none;">开始识别</button>
+
+            <div class="text-input-section">
+                <label for="questionText">或直接输入题目内容（支持 LaTeX 公式，如 $x^2$、$\frac{a}{b}$、$\sqrt{2}$）：</label>
+                <textarea id="questionText" placeholder="请输入数学题目内容..."></textarea>
+                <button class="btn" id="analyzeBtn">分析题目</button>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>正在分析题目...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <div class="result-section" id="resultSection">
+                <div class="result-card">
+                    <h3><span class="icon">📝</span>原始题目</h3>
+                    <div class="original-question" id="originalQuestion"></div>
+                    <button class="btn btn-small btn-outline" id="editQuestionBtn" style="margin-top: 10px; display: none;">编辑题目</button>
+                    <div id="editQuestionPanel" style="display: none; margin-top: 10px;">
+                        <textarea id="editQuestionText" style="width: 100%; height: 100px; padding: 10px; border: 2px solid #ddd; border-radius: 8px;"></textarea>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-small" id="saveEditBtn">保存并重新分析</button>
+                            <button class="btn btn-small btn-outline" id="cancelEditBtn">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <h3><span class="icon">🎯</span>知识点分析</h3>
+                    <div class="knowledge-tags" id="knowledgeTags"></div>
+                    <div class="tag difficulty" id="difficultyTag"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3><span class="icon">💡</span>解题思路与答案</h3>
+                    <div class="solution" id="solution"></div>
+                </div>
+
+                <div class="result-card">
+                    <h3><span class="icon">🔄</span>举一反三（类似题目）</h3>
+                    <ul class="related-questions" id="relatedQuestions"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox for image preview -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="放大查看">
+    </div>
+
+    <script>
+        // DOM元素
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const questionText = document.getElementById('questionText');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultSection = document.getElementById('resultSection');
+
+        // 点击上传区域触发文件选择
+        uploadSection.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 文件选择变化 - 显示已选文件名
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                uploadSection.querySelector('.upload-text').textContent = `已选择: ${file.name}`;
+                uploadBtn.style.display = 'inline-block';
+            }
+        });
+
+        // 拖拽上传
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.style.borderColor = '#667eea';
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.style.borderColor = '#dee2e6';
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.style.borderColor = '#dee2e6';
+            if (e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                uploadSection.querySelector('.upload-text').textContent = `已选择: ${file.name}`;
+                uploadBtn.style.display = 'inline-block';
+                // 拖拽时直接上传
+                uploadFile(file);
+            }
+        });
+
+        // 上传按钮
+        uploadBtn.addEventListener('click', () => {
+            if (fileInput.files.length > 0) {
+                uploadFile(fileInput.files[0]);
+            } else {
+                showError('请先选择要上传的图片');
+            }
+        });
+
+        // 分析按钮
+        analyzeBtn.addEventListener('click', () => {
+            const text = questionText.value.trim();
+            if (!text) {
+                showError('请输入题目内容');
+                return;
+            }
+            analyzeQuestion(text);
+        });
+
+        async function uploadFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('请选择图片文件');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    showError(data.error || '上传失败');
+                }
+            } catch (error) {
+                showError('网络错误，请重试');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function analyzeQuestion(text) {
+            showLoading(true);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    showError(data.error || '分析失败');
+                }
+            } catch (error) {
+                showError('网络错误，请重试');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResult(data) {
+            const originalQuestionDiv = document.getElementById('originalQuestion');
+            
+            let imageHtml = '';
+            if (data.image_url) {
+                imageHtml = `
+                    <div class="uploaded-image-container">
+                        <img src="${data.image_url}" alt="题目原图" onclick="openLightbox('${data.image_url}')" title="点击查看大图" />
+                        <div class="caption">📷 上传的题目原图（点击可放大查看）</div>
+                    </div>`;
+            }
+            
+            originalQuestionDiv.innerHTML = imageHtml + escapeHtml(data.original_question);
+
+            const tagsContainer = document.getElementById('knowledgeTags');
+            tagsContainer.innerHTML = '';
+            data.analysis.knowledge_points.forEach(point => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = point;
+                tagsContainer.appendChild(tag);
+            });
+
+            document.getElementById('difficultyTag').textContent = '难度: ' + data.analysis.difficulty;
+
+            document.getElementById('solution').innerHTML = escapeHtml(data.analysis.solution);
+
+            const questionsContainer = document.getElementById('relatedQuestions');
+            questionsContainer.innerHTML = '';
+            data.related_questions.forEach((q, index) => {
+                const li = document.createElement('li');
+                const isGaokao = q.is_gaokao || false;
+                if (isGaokao) { li.classList.add('gaokao'); }
+                const sourceText = isGaokao && q.source ? '<div class="question-source">📝 ' + escapeHtml(q.source) + '</div>' : '';
+                li.innerHTML = `
+                    <div class="question-number">${index + 1}</div>
+                    <div class="question-text">${escapeHtml(q.question)}${isGaokao ? '<span class="gaokao-badge">高考真题</span>' : ''}</div>
+                    ${sourceText}
+                    <button class="toggle-answer-btn" onclick="toggleAnswer(${index})">查看解答 ▼</button>
+                    <div class="question-answer" id="answer-${index}" style="display: none;">${escapeHtml(q.answer)}</div>
+                `;
+                questionsContainer.appendChild(li);
+            });
+
+            resultSection.classList.add('active');
+
+            // 显示编辑按钮
+            document.getElementById('editQuestionBtn').style.display = 'inline-block';
+
+            // 渲染数学公式
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise([resultSection]).catch(function(err) {
+                    console.log('MathJax typeset error:', err);
+                });
+            }
+        }
+
+        // 编辑题目功能
+        document.getElementById('editQuestionBtn').addEventListener('click', function() {
+            const originalText = document.getElementById('originalQuestion').textContent.trim();
+            document.getElementById('editQuestionText').value = originalText;
+            document.getElementById('editQuestionPanel').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', function() {
+            document.getElementById('editQuestionPanel').style.display = 'none';
+            document.getElementById('editQuestionBtn').style.display = 'inline-block';
+        });
+
+        document.getElementById('saveEditBtn').addEventListener('click', function() {
+            const editedText = document.getElementById('editQuestionText').value.trim();
+            if (!editedText) {
+                alert('请输入题目内容');
+                return;
+            }
+            
+            showLoading(true);
+            fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: editedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    // 更新原始题目显示但保留图片
+                    const originalQuestionDiv = document.getElementById('originalQuestion');
+                    const currentImage = originalQuestionDiv.querySelector('img');
+                    let imageHtml = '';
+                    if (currentImage) {
+                        imageHtml = `
+                            <div class="uploaded-image-container">
+                                <img src="${currentImage.src}" alt="题目原图" onclick="openLightbox('${currentImage.src}')" title="点击查看大图" />
+                                <div class="caption">📷 上传的题目原图（点击可放大查看）</div>
+                            </div>`;
+                    }
+                    originalQuestionDiv.innerHTML = imageHtml + escapeHtml(data.original_question);
+                    
+                    // 更新其他内容
+                    const tagsContainer = document.getElementById('knowledgeTags');
+                    tagsContainer.innerHTML = '';
+                    data.analysis.knowledge_points.forEach(point => {
+                        const tag = document.createElement('span');
+                        tag.className = 'tag';
+                        tag.textContent = point;
+                        tagsContainer.appendChild(tag);
+                    });
+                    
+                    document.getElementById('difficultyTag').textContent = '难度: ' + data.analysis.difficulty;
+                    document.getElementById('solution').innerHTML = escapeHtml(data.analysis.solution);
+                    
+                    const questionsContainer = document.getElementById('relatedQuestions');
+                    questionsContainer.innerHTML = '';
+                    data.related_questions.forEach((q, index) => {
+                        const li = document.createElement('li');
+                        const isGaokao = q.is_gaokao || false;
+                        if (isGaokao) { li.classList.add('gaokao'); }
+                        const sourceText = isGaokao && q.source ? '<div class="question-source">📝 ' + escapeHtml(q.source) + '</div>' : '';
+                        li.innerHTML = `
+                            <div class="question-number">${index + 1}</div>
+                            <div class="question-text">${escapeHtml(q.question)}${isGaokao ? '<span class="gaokao-badge">高考真题</span>' : ''}</div>
+                            ${sourceText}
+                            <button class="toggle-answer-btn" onclick="toggleAnswer(${index})">查看解答 ▼</button>
+                            <div class="question-answer" id="answer-${index}" style="display: none;">${escapeHtml(q.answer)}</div>
+                        `;
+                        questionsContainer.appendChild(li);
+                    });
+                    
+                    if (window.MathJax && MathJax.typesetPromise) {
+                        MathJax.typesetPromise([resultSection]).catch(function(err) {
+                            console.log('MathJax typeset error:', err);
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                showError('网络错误，请重试');
+            })
+            .finally(() => {
+                showLoading(false);
+                document.getElementById('editQuestionPanel').style.display = 'none';
+                document.getElementById('editQuestionBtn').style.display = 'inline-block';
+            });
+        });
+
+        function toggleAnswer(index) {
+            const answerDiv = document.getElementById(`answer-${index}`);
+            const btn = answerDiv.previousElementSibling;
+            
+            if (answerDiv.style.display === 'none') {
+                answerDiv.style.display = 'block';
+                btn.textContent = '收起解答 ▲';
+                
+                // 渲染公式
+                if (window.MathJax && MathJax.typesetPromise) {
+                    MathJax.typesetPromise([answerDiv]).catch(function(err) {
+                        console.log('MathJax error:', err);
+                    });
+                }
+            } else {
+                answerDiv.style.display = 'none';
+                btn.textContent = '查看解答 ▼';
+            }
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            uploadBtn.disabled = show;
+            analyzeBtn.disabled = show;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
