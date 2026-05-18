@@ -681,6 +681,7 @@
                 <div class="loading" id="ocrLoading">
                     <div class="loading-spinner"></div>
                     <div class="loading-text">正在识别，请稍候...</div>
+                    <button class="btn btn-outline" id="cancelOcrBtn" style="margin-top: 15px;">取消识别</button>
                 </div>
 
                 <div class="loading" id="analyzeLoading">
@@ -729,6 +730,8 @@
     <script>
         let currentResult = null;
         let currentImageData = null;
+        let ocrWorker = null;
+        let ocrTimeout = null;
 
         // DOM元素
         const questionText = document.getElementById('questionText');
@@ -751,6 +754,7 @@
         const ocrBtn = document.getElementById('ocrBtn');
         const reuploadBtn = document.getElementById('reuploadBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const cancelOcrBtn = document.getElementById('cancelOcrBtn');
         const ocrBtnGroup = document.getElementById('ocrBtnGroup');
         const graphDescription = document.getElementById('graphDescription');
 
@@ -872,32 +876,100 @@
 
             ocrLoading.style.display = 'block';
             ocrBtn.disabled = true;
-
+            const loadingText = ocrLoading.querySelector('.loading-text');
+            
             try {
-                const compressedImage = await compressImage(currentImageData);
+                // 更激进的图片压缩，确保快速处理
+                const compressedImage = await compressImage(currentImageData, 1200);
                 
-                const result = await Tesseract.recognize(
-                    compressedImage,
-                    'chi_sim+eng',
-                    {
-                        logger: (m) => {
-                            if (m.status === 'recognizing text') {
-                                console.log('识别进度:', m.progress);
-                            }
+                loadingText.textContent = '正在加载识别引擎...';
+                
+                // 设置超时（60秒）
+                ocrTimeout = setTimeout(() => {
+                    if (ocrWorker) {
+                        ocrWorker.terminate();
+                        ocrWorker = null;
+                    }
+                    showError('识别超时，请手动输入题目或尝试重新上传');
+                    ocrLoading.style.display = 'none';
+                    ocrBtn.disabled = false;
+                }, 60000);
+                
+                // 创建worker
+                ocrWorker = await Tesseract.createWorker('chi_sim+eng', 1, {
+                    logger: (m) => {
+                        console.log('OCR状态:', m.status, m.progress);
+                        if (m.status === 'loading tesseract core') {
+                            loadingText.textContent = '正在加载识别引擎...';
+                        } else if (m.status === 'initializing tesseract') {
+                            loadingText.textContent = '正在初始化...';
+                        } else if (m.status === 'loading language traineddata') {
+                            loadingText.textContent = '正在下载语言包（首次使用需要）...';
+                        } else if (m.status === 'initializing api') {
+                            loadingText.textContent = '正在初始化API...';
+                        } else if (m.status === 'recognizing text') {
+                            const percent = Math.round((m.progress || 0) * 100);
+                            loadingText.textContent = `正在识别... ${percent}%`;
                         }
                     }
-                );
+                });
+                
+                // 识别
+                const { data: { text } } = await ocrWorker.recognize(compressedImage);
+                
+                // 终止worker
+                await ocrWorker.terminate();
+                ocrWorker = null;
+                
+                // 清除超时
+                clearTimeout(ocrTimeout);
 
-                questionText.value = result.data.text.trim();
-                ocrWarning.style.display = 'block';
-                showSuccess('识别完成，请手动校对内容！');
+                const recognizedText = text.trim();
+                if (recognizedText) {
+                    questionText.value = recognizedText;
+                    ocrWarning.style.display = 'block';
+                    showSuccess('识别完成，请手动校对内容！');
+                } else {
+                    showError('未识别到文字，请手动输入题目');
+                }
             } catch (error) {
                 console.error('OCR错误:', error);
-                showError('识别失败，请手动输入题目');
+                if (error && error.message && error.message.includes('cancelled')) {
+                    showError('识别已取消');
+                } else {
+                    showError('识别失败，请手动输入题目。错误: ' + (error.message || '未知错误'));
+                }
             } finally {
+                // 确保worker被终止
+                if (ocrWorker) {
+                    try {
+                        await ocrWorker.terminate();
+                    } catch (e) {
+                        // 忽略终止错误
+                    }
+                    ocrWorker = null;
+                }
+                // 清除超时
+                clearTimeout(ocrTimeout);
                 ocrLoading.style.display = 'none';
                 ocrBtn.disabled = false;
             }
+        });
+        
+        // 取消OCR识别
+        cancelOcrBtn.addEventListener('click', async () => {
+            if (ocrWorker) {
+                try {
+                    await ocrWorker.terminate();
+                } catch (e) {
+                    // 忽略终止错误
+                }
+                ocrWorker = null;
+            }
+            clearTimeout(ocrTimeout);
+            ocrLoading.style.display = 'none';
+            ocrBtn.disabled = false;
+            showError('识别已取消');
         });
 
         // 重新上传
