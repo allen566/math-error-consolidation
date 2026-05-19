@@ -3,6 +3,7 @@
 import os
 import json
 import time
+import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -14,22 +15,52 @@ from question_generator import QuestionGenerator
 analyzer = MathAnalyzer()
 generator = QuestionGenerator()
 
-# 错题本文件路径
-MISTAKES_FILE = 'mistakes.json'
+# 数据目录
+DATA_DIR = 'data'
+USERS_FILE = os.path.join(DATA_DIR, 'users.json')
 
-def load_mistakes():
-    """加载错题"""
-    if os.path.exists(MISTAKES_FILE):
+# 确保数据目录存在
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+def hash_password(password):
+    """简单的密码哈希"""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def load_users():
+    """加载用户数据"""
+    if os.path.exists(USERS_FILE):
         try:
-            with open(MISTAKES_FILE, 'r', encoding='utf-8') as f:
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
+
+def save_users(users):
+    """保存用户数据"""
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+
+def get_user_mistakes_file(username):
+    """获取用户的错题本文件路径"""
+    return os.path.join(DATA_DIR, f'mistakes_{username}.json')
+
+def load_mistakes(username):
+    """加载用户的错题"""
+    mistakes_file = get_user_mistakes_file(username)
+    if os.path.exists(mistakes_file):
+        try:
+            with open(mistakes_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except:
             pass
     return []
 
-def save_mistakes(mistakes):
-    """保存错题"""
-    with open(MISTAKES_FILE, 'w', encoding='utf-8') as f:
+def save_mistakes(username, mistakes):
+    """保存用户的错题"""
+    mistakes_file = get_user_mistakes_file(username)
+    with open(mistakes_file, 'w', encoding='utf-8') as f:
         json.dump(mistakes, f, ensure_ascii=False, indent=2)
 
 class MathRequestHandler(BaseHTTPRequestHandler):
@@ -61,40 +92,102 @@ class MathRequestHandler(BaseHTTPRequestHandler):
                     self.send_html_response(f.read())
             else:
                 self.send_json_response({'error': '首页未找到'}, 404)
-        elif self.path == '/mistakes':
-            self.handle_get_mistakes()
         else:
             self.send_json_response({'error': '页面未找到'}, 404)
     
     def do_POST(self):
         """处理POST请求"""
-        if self.path == '/analyze':
-            self.handle_analyze()
+        content_length = int(self.headers['Content-Length'])
+        body = self.rfile.read(content_length)
+        
+        try:
+            body_str = body.decode('utf-8')
+        except UnicodeDecodeError:
+            body_str = body.decode('latin-1')
+        
+        data = json.loads(body_str)
+        
+        if self.path == '/register':
+            self.handle_register(data)
+        elif self.path == '/login':
+            self.handle_login(data)
+        elif self.path == '/analyze':
+            self.handle_analyze(data)
         elif self.path == '/mistakes':
-            self.handle_add_mistake()
+            self.handle_add_mistake(data)
+        elif self.path == '/mistakes/list':
+            self.handle_get_mistakes(data)
+        elif self.path == '/mistakes/delete':
+            self.handle_delete_mistake(data)
+        elif self.path == '/mistakes/stars':
+            self.handle_update_stars(data)
         else:
             self.send_json_response({'error': '接口不存在'}, 404)
     
-    def do_DELETE(self):
-        """处理DELETE请求"""
-        if self.path.startswith('/mistakes/'):
-            mistake_id = self.path.split('/')[-1]
-            self.handle_delete_mistake(mistake_id)
-        else:
-            self.send_json_response({'error': '接口不存在'}, 404)
+    def handle_register(self, data):
+        """处理注册请求"""
+        try:
+            username = data.get('username', '').strip()
+            password = data.get('password', '').strip()
+            
+            if not username or not password:
+                self.send_json_response({'error': '用户名和密码不能为空'}, 400)
+                return
+            
+            if len(username) < 3:
+                self.send_json_response({'error': '用户名至少3个字符'}, 400)
+                return
+            
+            if len(password) < 4:
+                self.send_json_response({'error': '密码至少4个字符'}, 400)
+                return
+            
+            users = load_users()
+            
+            if username in users:
+                self.send_json_response({'error': '用户名已存在'}, 400)
+                return
+            
+            users[username] = {
+                'password': hash_password(password),
+                'created_at': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            save_users(users)
+            
+            self.send_json_response({'success': True, 'message': '注册成功，请登录'})
+        except Exception as e:
+            print(f'注册错误: {e}')
+            self.send_json_response({'error': f'注册失败: {str(e)}'}, 500)
     
-    def handle_analyze(self):
+    def handle_login(self, data):
+        """处理登录请求"""
+        try:
+            username = data.get('username', '').strip()
+            password = data.get('password', '').strip()
+            
+            if not username or not password:
+                self.send_json_response({'error': '用户名和密码不能为空'}, 400)
+                return
+            
+            users = load_users()
+            
+            if username not in users:
+                self.send_json_response({'error': '用户名不存在'}, 400)
+                return
+            
+            if users[username]['password'] != hash_password(password):
+                self.send_json_response({'error': '密码错误'}, 400)
+                return
+            
+            self.send_json_response({'success': True, 'username': username})
+        except Exception as e:
+            print(f'登录错误: {e}')
+            self.send_json_response({'error': f'登录失败: {str(e)}'}, 500)
+    
+    def handle_analyze(self, data):
         """处理文本分析请求"""
         try:
-            content_length = int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length)
-            
-            try:
-                body_str = body.decode('utf-8')
-            except UnicodeDecodeError:
-                body_str = body.decode('latin-1')
-            
-            data = json.loads(body_str)
             question_text = data.get('question', '')
             
             if not question_text:
@@ -117,53 +210,102 @@ class MathRequestHandler(BaseHTTPRequestHandler):
             })
             
         except Exception as e:
-            print(f"Analysis error: {e}")
+            print(f'分析错误: {e}')
             import traceback
             traceback.print_exc()
             self.send_json_response({'error': f'分析失败: {str(e)}'}, 500)
     
-    def handle_get_mistakes(self):
+    def handle_get_mistakes(self, data):
         """获取错题列表"""
         try:
-            mistakes = load_mistakes()
+            username = data.get('username', '')
+            if not username:
+                self.send_json_response({'error': '请先登录'}, 400)
+                return
+            
+            mistakes = load_mistakes(username)
             self.send_json_response({'mistakes': mistakes})
         except Exception as e:
-            print(f"Get mistakes error: {e}")
+            print(f'获取错题错误: {e}')
             self.send_json_response({'error': f'获取错题失败: {str(e)}'}, 500)
     
-    def handle_add_mistake(self):
+    def handle_add_mistake(self, data):
         """添加错题"""
         try:
-            content_length = int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length)
-            data = json.loads(body.decode('utf-8'))
+            username = data.get('username', '')
+            if not username:
+                self.send_json_response({'error': '请先登录'}, 400)
+                return
             
             mistake = {
                 'id': str(int(time.time() * 1000)),
                 'question': data.get('question', ''),
                 'analysis': data.get('analysis', {}),
                 'related_questions': data.get('related_questions', []),
-                'created_at': time.strftime('%Y-%m-%d %H:%M:%S')
+                'created_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'stars': 0  # 默认0星
             }
             
-            mistakes = load_mistakes()
+            mistakes = load_mistakes(username)
             mistakes.insert(0, mistake)
-            save_mistakes(mistakes)
+            save_mistakes(username, mistakes)
             
             self.send_json_response({'success': True, 'mistake': mistake})
         except Exception as e:
-            print(f"Add mistake error: {e}")
+            print(f'添加错题错误: {e}')
             self.send_json_response({'error': f'添加错题失败: {str(e)}'}, 500)
     
-    def handle_delete_mistake(self, mistake_id):
-        """删除错题"""
+    def handle_update_stars(self, data):
+        """更新星级"""
         try:
-            mistakes = load_mistakes()
-            mistakes = [m for m in mistakes if m.get('id') != mistake_id]
-            save_mistakes(mistakes)
+            username = data.get('username', '')
+            if not username:
+                self.send_json_response({'error': '请先登录'}, 400)
+                return
+            
+            mistake_id = data.get('id', '')
+            if not mistake_id:
+                self.send_json_response({'error': '请指定要更新的错题'}, 400)
+                return
+            
+            stars = data.get('stars', 0)
+            if not isinstance(stars, int) or stars < 0 or stars > 5:
+                self.send_json_response({'error': '星级必须是0-5之间的整数'}, 400)
+                return
+            
+            mistakes = load_mistakes(username)
+            for mistake in mistakes:
+                if mistake.get('id') == mistake_id:
+                    mistake['stars'] = stars
+                    break
+            
+            save_mistakes(username, mistakes)
+            
             self.send_json_response({'success': True})
         except Exception as e:
-            print(f"Delete mistake error: {e}")
+            print(f'更新星级错误: {e}')
+            self.send_json_response({'error': f'更新星级失败: {str(e)}'}, 500)
+    
+    def handle_delete_mistake(self, data):
+        """删除错题"""
+        try:
+            username = data.get('username', '')
+            if not username:
+                self.send_json_response({'error': '请先登录'}, 400)
+                return
+            
+            mistake_id = data.get('id', '')
+            if not mistake_id:
+                self.send_json_response({'error': '请指定要删除的错题'}, 400)
+                return
+            
+            mistakes = load_mistakes(username)
+            mistakes = [m for m in mistakes if m.get('id') != mistake_id]
+            save_mistakes(username, mistakes)
+            
+            self.send_json_response({'success': True})
+        except Exception as e:
+            print(f'删除错题错误: {e}')
             self.send_json_response({'error': f'删除错题失败: {str(e)}'}, 500)
 
 
@@ -182,15 +324,15 @@ def run_server(port=None):
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
     
-    print(f"服务器已启动！")
-    print(f"本机访问：http://localhost:{port}")
-    print(f"手机访问：http://{local_ip}:{port}")
-    print("(手机和电脑需连接同一WiFi)")
-    print("按 Ctrl+C 停止服务器")
+    print(f'服务器已启动！')
+    print(f'本机访问：http://localhost:{port}')
+    print(f'手机访问：http://{local_ip}:{port}')
+    print('(手机和电脑需连接同一WiFi)')
+    print('按 Ctrl+C 停止服务器')
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n服务器已停止")
+        print('\n服务器已停止')
         httpd.server_close()
 
 
