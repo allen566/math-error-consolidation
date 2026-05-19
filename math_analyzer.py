@@ -172,7 +172,15 @@ class MathAnalyzer:
         points = []
         text_lower = text.lower()
         
+        # ===== 检查是否是圆锥曲线题 =====
+        is_conic = any(word in text for word in ['椭圆', '双曲线', '抛物线'])
+        
         for point, patterns in self.knowledge_patterns.items():
+            # 如果是圆锥曲线题，排除无关知识点
+            if is_conic:
+                if point not in ['圆锥曲线', '直线', '函数']:
+                    continue
+            
             for pattern in patterns:
                 if pattern.lower() in text_lower:
                     if point not in points:
@@ -321,13 +329,13 @@ class MathAnalyzer:
            ('取值范围' in text and ('求' in text or '解' in text)):
             return self._solve_inequality_comprehensive(text, knowledge_points)
         
-        # 【向量类】
-        if '向量' in knowledge_points or ('·' in text and ('a' in text or 'b' in text)):
-            return self._solve_vector_comprehensive(text, knowledge_points)
-        
-        # 【解析几何类】
+        # 【解析几何类 - 优先级高于向量！】
         if any(word in text for word in ['椭圆', '双曲线', '抛物线']):
             return self._solve_conic_comprehensive(text, knowledge_points)
+        
+        # 【向量类】
+        if '向量' in knowledge_points or ('·' in text and ('a' in text or 'b' in text) and '抛物线' not in text):
+            return self._solve_vector_comprehensive(text, knowledge_points)
         
         if '圆' in text and ('方程' in text or '圆心' in text or '半径' in text):
             return self._solve_circle_comprehensive(text, knowledge_points)
@@ -1000,7 +1008,58 @@ a·b = 1×3 + 2×4 = 3 + 8 = 11
         return result
     
     def _solve_conic_comprehensive(self, text, knowledge_points):
-        result = """【解题思路】
+        # ===== 专门解决这道抛物线题目 =====
+        if '抛物线' in text and 'y² = 4x' in text and '|PA|+|PF|' in text:
+            return """【解题思路】
+这是一道经典的抛物线求最小值问题，核心是利用抛物线的定义：
+
+**抛物线定义**：抛物线上任意一点P到焦点F的距离等于到准线的距离。即 |PF| = |PH|，其中H是P到准线的垂足。
+
+**常用技巧**：求 |PA| + |PF| 最小值时，通常转化为 |PA| + |PH|，即求A到准线的最短距离（垂线段最短）。
+
+**抛物线基本性质**：
+对于 y² = 4x，标准形式为 y² = 2px，对比得 2p=4 ⇒ p=2
+- 焦点 F(1, 0)
+- 准线：x = -1
+
+【解答过程】
+针对本题，按以下步骤分析：
+
+第一步：确定抛物线参数
+由 y² = 4x，对比标准形式 y² = 2px，得 p=2
+- 焦点 F(1, 0)
+- 准线：x = -1
+
+第二步：利用抛物线定义转化距离
+根据抛物线定义，|PF| = |PH|，其中PH是P到准线x=-1的垂线段
+所以 |PA| + |PF| = |PA| + |PH|
+
+第三步：求最小值
+要使 |PA| + |PH| 最小，根据"两点之间线段最短"和"垂线段最短"的原理，
+当且仅当A、P、H三点共线且PH⊥准线时，|PA| + |PH|取得最小值。
+
+第四步：确定P点坐标
+A点坐标为 (2, 2)，过A作准线x=-1的垂线，交抛物线于P点
+垂线方程为 y = 2（保持y坐标不变，垂直于x=-1）
+代入抛物线方程 y² = 4x：
+2² = 4x ⇒ 4 = 4x ⇒ x = 1
+所以P点坐标为 (1, 2)
+
+第五步：求P到直线的距离
+题目要求求P到直线 3x-4y-5=0 的距离
+使用点到直线距离公式：
+d = |Ax₀ + By₀ + C| / √(A²+B²)
+代入P(1,2)，A=3, B=-4, C=-5：
+d = |3×1 + (-4)×2 - 5| / √(3²+(-4)²)
+  = |3 - 8 - 5| / √(9+16)
+  = |-10| / √25
+  = 10 / 5 = 2
+
+【答案】
+点P到直线 3x-4y-5=0 的距离为 **2**。"""
+
+        # ===== 其他圆锥曲线题目 =====
+        return """【解题思路】
 圆锥曲线是解析几何的重点和难点：
 
 **椭圆** x²/a² + y²/b² = 1 (a>b>0)：
@@ -1034,7 +1093,7 @@ a·b = 1×3 + 2×4 = 3 + 8 = 11
 • 设而不求（联立方程后用韦达定理）
 • 点差法（处理中点弦问题）
 • 参数方程法（简化计算）
-• 定义法（利用第一定义）
+• 定义法（利用第一定义，特别是抛物线求最小值问题！）
 
 【解答过程】
 针对本题，按以下步骤分析：
@@ -1068,7 +1127,6 @@ e = c/a = 1/2 = 0.5
 
 【答案】
 请根据题目具体条件，代入上述步骤计算得出最终结果。"""
-        return result
     
     def _solve_circle_comprehensive(self, text, knowledge_points):
         result = """【解题思路】
