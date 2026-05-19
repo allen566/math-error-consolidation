@@ -25,6 +25,7 @@ wheels/
 # 项目特有
 uploads/
 *.log
+data/
 
 # IDE
 .vscode/
